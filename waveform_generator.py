@@ -3,18 +3,18 @@ import pandas as pd
 import math
 
 SAMPLE_RATE = 1000000
-NOISE_STRENGTH = 1
-BIAS = 100
+NOISE_STRENGTH = 0.01
+BIAS = 0
 
 # generate noise data
 noise = np.random.normal(0, NOISE_STRENGTH, SAMPLE_RATE)
 
 # generate interference signal
 interference = np.zeros(SAMPLE_RATE)
-INTERFERENCE_FREQUENCIES = [60, 50]
+INTERFERENCE_FREQUENCIES = [60, 50, 287, 3418, 794]
 for i in range(0, SAMPLE_RATE):
     for frequency in INTERFERENCE_FREQUENCIES:
-        #interference[i] += 10 *  math.sin(2 * math.pi * frequency * i / SAMPLE_RATE)
+        #interference[i] += 100 *  math.sin(2 * math.pi * frequency * i / SAMPLE_RATE)
         pass
 
 # 1/e time constant (in seconds)
@@ -22,8 +22,12 @@ for i in range(0, SAMPLE_RATE):
 FLUORESCENCE_TIME_CONSTANT = 424e-6
 FLUORESCENCE_TIME_CONSTANT_SAMPLES = math.floor(FLUORESCENCE_TIME_CONSTANT * SAMPLE_RATE)
 
-EXCITATION_INTERVAL = 10e-3
+EXCITATION_INTERVAL = 2e-3
 EXCITATION_INTERVAL_SAMPLES = math.floor(EXCITATION_INTERVAL * SAMPLE_RATE)
+
+# delay next pulse slightly longer than the previous pulse (chirp)
+EXCITATION_CONSECUTIVE_DELAY = 0.0e-3
+EXCITATION_CONSECUTIVE_DELAY_SAMPLES = math.floor(EXCITATION_CONSECUTIVE_DELAY * SAMPLE_RATE)
 
 def u(t):
     if t > 0:
@@ -34,8 +38,8 @@ def u(t):
 # generate emissions waveform
 emissions = np.zeros(SAMPLE_RATE)
 for i in range(0, math.floor(SAMPLE_RATE / EXCITATION_INTERVAL_SAMPLES)):
-    for j in range(i * EXCITATION_INTERVAL_SAMPLES, min(i * EXCITATION_INTERVAL_SAMPLES + FLUORESCENCE_TIME_CONSTANT_SAMPLES * 10, SAMPLE_RATE)):
-        emissions[j] += math.exp(-(j - i * EXCITATION_INTERVAL_SAMPLES) / FLUORESCENCE_TIME_CONSTANT_SAMPLES) * u(j - i * EXCITATION_INTERVAL_SAMPLES)
+    for j in range(i * EXCITATION_INTERVAL_SAMPLES + i * i * EXCITATION_CONSECUTIVE_DELAY_SAMPLES, min(i * EXCITATION_INTERVAL_SAMPLES + i * i * EXCITATION_CONSECUTIVE_DELAY_SAMPLES + FLUORESCENCE_TIME_CONSTANT_SAMPLES * 10, SAMPLE_RATE)):
+        emissions[j] += math.exp(-(j - (i * EXCITATION_INTERVAL_SAMPLES + i * i * EXCITATION_CONSECUTIVE_DELAY_SAMPLES)) / FLUORESCENCE_TIME_CONSTANT_SAMPLES) * u(j - (i * EXCITATION_INTERVAL_SAMPLES + i * i * EXCITATION_CONSECUTIVE_DELAY_SAMPLES))
 
 data = noise + emissions + interference + BIAS
 
@@ -44,9 +48,10 @@ pd.DataFrame(np.real(data)).to_csv("original_data.csv")
 
 # filtering
 fft = np.fft.fft(data)
+pd.DataFrame(np.abs(fft)).to_csv("fft.csv")
 fundamental_index = math.floor(SAMPLE_RATE / EXCITATION_INTERVAL_SAMPLES)
 for i in range(0, math.floor(len(fft) / 2)):
-    if (i < fundamental_index / 8) or (i > 100 * fundamental_index) or ((i % fundamental_index) > 5 and (fundamental_index - i % fundamental_index) > 5):
+    if (i < fundamental_index / 8) or (i > 100 * fundamental_index) or ((i % fundamental_index) > 5 and (fundamental_index - i % fundamental_index) > 30):
         fft[i] = 0
         fft[-i - 1] = 0
 data = np.fft.ifft(fft)
