@@ -25,13 +25,19 @@ FLUORESCENCE_TIME_CONSTANT_SAMPLES = math.floor(FLUORESCENCE_TIME_CONSTANT * SAM
 EXCITATION_INTERVAL = 10e-3
 EXCITATION_INTERVAL_SAMPLES = math.floor(EXCITATION_INTERVAL * SAMPLE_RATE)
 
+def u(t):
+    if t > 0:
+        return 1
+    else:
+        return 0
+
 # generate emissions waveform
 emissions = np.zeros(SAMPLE_RATE)
 for i in range(0, math.floor(SAMPLE_RATE / EXCITATION_INTERVAL_SAMPLES)):
     for j in range(i * EXCITATION_INTERVAL_SAMPLES, min(i * EXCITATION_INTERVAL_SAMPLES + FLUORESCENCE_TIME_CONSTANT_SAMPLES * 10, SAMPLE_RATE)):
-        emissions[j] += math.exp(-(j - i * EXCITATION_INTERVAL_SAMPLES) / FLUORESCENCE_TIME_CONSTANT_SAMPLES) * max(j - i * EXCITATION_INTERVAL_SAMPLES, 0) # e^(-t/T) * u(t - T)
+        emissions[j] += math.exp(-(j - i * EXCITATION_INTERVAL_SAMPLES) / FLUORESCENCE_TIME_CONSTANT_SAMPLES) * u(j - i * EXCITATION_INTERVAL_SAMPLES)
 
-data = noise + emissions + interference+ BIAS
+data = noise + emissions + interference + BIAS
 
 # output original waveform
 pd.DataFrame(np.real(data)).to_csv("original_data.csv")
