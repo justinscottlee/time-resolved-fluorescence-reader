@@ -1,3 +1,6 @@
+.vscode/
+stm32/build/
+
 # Prerequisites
 *.d
 
