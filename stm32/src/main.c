@@ -3,6 +3,7 @@
 
 #include "trf_system.h"
 #include "trf_clock.h"
+#include "trf_scheduler.h"
 
 int main(void) {
 	TRF_Assert(HAL_Init() == HAL_OK);
@@ -10,6 +11,6 @@ int main(void) {
 	TRF_Clock_Init();
 
 	while (1) {
-		
+		SCH_DispatchTasks();
 	}
 }

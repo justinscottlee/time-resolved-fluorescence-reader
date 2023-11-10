@@ -1,5 +1,6 @@
 #include "stm32h7xx_it.h"
 #include "stm32h7xx_hal.h"
+#include "trf_scheduler.h"
 
 void NMI_Handler(void) {
   while (1) {
@@ -45,4 +46,5 @@ void PendSV_Handler(void) {
 
 void SysTick_Handler(void) {
 	HAL_IncTick();
+	SCH_Tick();
 }
