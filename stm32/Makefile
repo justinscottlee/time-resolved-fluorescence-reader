@@ -26,7 +26,9 @@ BUILD_DIR = build
 C_SOURCES =  \
 src/main.c \
 src/stm32h7xx_it.c \
+src/system_stm32h7xx.c \
 src/trf_clock.c \
+src/trf_system.c \
 hal/src/stm32h7xx_hal_cortex.c \
 hal/src/stm32h7xx_hal_rcc.c \
 hal/src/stm32h7xx_hal_rcc_ex.c \
@@ -48,8 +50,7 @@ hal/src/stm32h7xx_hal_eth_ex.c \
 hal/src/stm32h7xx_hal_tim.c \
 hal/src/stm32h7xx_hal_tim_ex.c \
 hal/src/stm32h7xx_hal_uart.c \
-hal/src/stm32h7xx_hal_uart_ex.c \
-src/system_stm32h7xx.c
+hal/src/stm32h7xx_hal_uart_ex.c
 
 # ASM sources
 ASM_SOURCES =  \
