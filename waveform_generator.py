@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import math
 
-SAMPLE_RATE = 1000000
+SAMPLE_RATE = 50000
 NOISE_STRENGTH = 0.01
 BIAS = 0
 
@@ -43,17 +44,16 @@ for i in range(0, math.floor(SAMPLE_RATE / EXCITATION_INTERVAL_SAMPLES)):
 
 data = noise + emissions + interference + BIAS
 
-# output original waveform
-pd.DataFrame(np.real(data)).to_csv("original_data.csv")
+plt.plot(data[:150])
 
 # filtering
 fft = np.fft.fft(data)
-pd.DataFrame(np.abs(fft)).to_csv("fft.csv")
 fundamental_index = math.floor(SAMPLE_RATE / EXCITATION_INTERVAL_SAMPLES)
 for i in range(0, math.floor(len(fft) / 2)):
-    if (i < fundamental_index / 8) or (i > 100 * fundamental_index) or ((i % fundamental_index) > 5 and (fundamental_index - i % fundamental_index) > 30):
+    if (i > 100 * fundamental_index) or ((i % fundamental_index) > 5 and (fundamental_index - i % fundamental_index) > 30):
         fft[i] = 0
         fft[-i - 1] = 0
-data = np.fft.ifft(fft)
+data = np.real(np.fft.ifft(fft))
 
-pd.DataFrame(np.real(data)).to_csv("processed_data.csv")
+plt.plot(data[:150])
+plt.savefig('data.png')
