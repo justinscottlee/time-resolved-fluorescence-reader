@@ -8,7 +8,7 @@
 int main(void) {
 	TRF_Assert(HAL_Init() == HAL_OK);
 
-	TRF_Clock_Init();
+	Clock_Init();
 
 	while (1) {
 		SCH_DispatchTasks();

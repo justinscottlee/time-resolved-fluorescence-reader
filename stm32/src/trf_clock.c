@@ -2,7 +2,8 @@
 #include "stm32h7xx_hal.h"
 #include "trf_system.h"
 
-void TRF_Clock_Init(void) {
+void Clock_Init(void) {
+    __HAL_RCC_SYSCFG_CLK_ENABLE();
     TRF_Assert(HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY) == HAL_OK);
 
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
