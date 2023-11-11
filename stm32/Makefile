@@ -30,6 +30,7 @@ src/system_stm32h7xx.c \
 src/trf_clock.c \
 src/trf_system.c \
 src/trf_scheduler.c \
+src/trf_adc.c \
 hal/src/stm32h7xx_hal_cortex.c \
 hal/src/stm32h7xx_hal_rcc.c \
 hal/src/stm32h7xx_hal_rcc_ex.c \

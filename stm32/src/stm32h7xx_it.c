@@ -48,3 +48,9 @@ void SysTick_Handler(void) {
 	HAL_IncTick();
 	SCH_Tick();
 }
+
+extern DMA_HandleTypeDef hdma_adc1;
+
+void DMA1_Stream0_IRQHandler(void) {
+	HAL_DMA_IRQHandler(&hdma_adc1);
+}
