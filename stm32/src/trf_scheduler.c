@@ -48,7 +48,9 @@ void SCH_DispatchTasks() {
 
 // Decrement each task's delay and mark any ready for execution.
 void SCH_Tick() {
-    for (uint8_t i = 0; i < MAX_TASKS; i++) {
+    for (uint32_t i = 0; i < MAX_TASKS; i++) {
+        if (tasks[i].FUNC == NULL)
+            continue;
         if (tasks[i].DELAY == 0) {
             tasks[i].READY++;
             tasks[i].DELAY = tasks[i].PERIOD - 1;
