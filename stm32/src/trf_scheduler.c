@@ -11,8 +11,8 @@ typedef struct task {
 task_t tasks[MAX_TASKS];
 
 // Insert a task to the scheduler and return its index. If task list is full, force a failed assertion.
-uint8_t SCH_AddTask(void (*func)(), uint32_t delay, uint32_t period) {
-    for (uint8_t i = 0; i < MAX_TASKS; i++) {
+uint32_t SCH_AddTask(void (*func)(), uint32_t delay, uint32_t period) {
+    for (uint32_t i = 0; i < MAX_TASKS; i++) {
         if (tasks[i].FUNC == NULL) {
             tasks[i].FUNC = func;
             tasks[i].DELAY = delay;
@@ -25,13 +25,13 @@ uint8_t SCH_AddTask(void (*func)(), uint32_t delay, uint32_t period) {
 }
 
 // Remove a task from the scheduler based on its task list index.
-void SCH_RemoveTask(uint8_t index) {
+void SCH_RemoveTask(uint32_t index) {
     tasks[index].FUNC = NULL;
 }
 
 // Execute all tasks ready for execution.
-void SCH_DispatchTasks() {
-    for (uint8_t i = 0; i < MAX_TASKS; i++) {
+void SCH_DispatchTasks(void) {
+    for (uint32_t i = 0; i < MAX_TASKS; i++) {
         if (tasks[i].FUNC == NULL) {
             continue;
         }
@@ -47,7 +47,7 @@ void SCH_DispatchTasks() {
 }
 
 // Decrement each task's delay and mark any ready for execution.
-void SCH_Tick() {
+void SCH_Tick(void) {
     for (uint32_t i = 0; i < MAX_TASKS; i++) {
         if (tasks[i].FUNC == NULL)
             continue;

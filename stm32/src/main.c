@@ -19,7 +19,7 @@ int main(void) {
 	GPIO_Init();
 
 	GPIO_Pin_InitOutput(yellowled);
-	SCH_AddTask(flash_led, 0, 500);
+	(void)SCH_AddTask(flash_led, 0, 500);
 
 	while (1) {
 		SCH_DispatchTasks();
