@@ -44,7 +44,10 @@ for i in range(0, math.floor(SAMPLE_RATE / EXCITATION_INTERVAL_SAMPLES)):
 
 data = noise + emissions + interference + BIAS
 
-plt.plot(data[:150])
+plt.title("Fluorescence Emission Waveform")
+plt.xlabel("Sample No. (50 kHz)")
+plt.ylabel("Emission Intensity (normalized)")
+plt.plot(data[:150], label="Unfiltered")
 
 # filtering
 fft = np.fft.fft(data)
@@ -55,5 +58,6 @@ for i in range(0, math.floor(len(fft) / 2)):
         fft[-i - 1] = 0
 data = np.real(np.fft.ifft(fft))
 
-plt.plot(data[:150])
+plt.plot(data[:150], label="Filtered")
+plt.legend()
 plt.savefig('data.png')
