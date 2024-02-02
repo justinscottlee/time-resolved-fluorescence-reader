@@ -50,7 +50,11 @@ void SysTick_Handler(void) {
 }
 
 extern DMA_HandleTypeDef hdma_adc1;
-
 void DMA1_Stream0_IRQHandler(void) {
 	HAL_DMA_IRQHandler(&hdma_adc1);
+}
+
+extern UART_HandleTypeDef huart3;
+void USART3_IRQHandler(void) {
+	HAL_UART_IRQHandler(&huart3);
 }

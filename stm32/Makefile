@@ -32,6 +32,7 @@ src/trf_system.c \
 src/trf_scheduler.c \
 src/trf_adc.c \
 src/trf_gpio.c \
+src/trf_usart.c \
 hal/src/stm32h7xx_hal_cortex.c \
 hal/src/stm32h7xx_hal_rcc.c \
 hal/src/stm32h7xx_hal_rcc_ex.c \
@@ -53,7 +54,8 @@ hal/src/stm32h7xx_hal_eth_ex.c \
 hal/src/stm32h7xx_hal_tim.c \
 hal/src/stm32h7xx_hal_tim_ex.c \
 hal/src/stm32h7xx_hal_uart.c \
-hal/src/stm32h7xx_hal_uart_ex.c
+hal/src/stm32h7xx_hal_uart_ex.c \
+hal/src/stm32h7xx_hal_usart_ex.c
 
 # ASM sources
 ASM_SOURCES =  \
