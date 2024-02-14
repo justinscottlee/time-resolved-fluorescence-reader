@@ -45,31 +45,26 @@ void USART_Init(void) {
     HAL_UART_Receive_IT(&huart3, &receive_buffer[receive_tail_index], 1);
 }
 
-void USART_Transmit(uint8_t *buffer, uint16_t length) {
-    // Fire and forget comms. TODO: Make it smart?
-    (void)HAL_UART_Transmit(&huart3, buffer, length, 10);
-}
-
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart == &huart3) {
-        receive_tail_index++;
-        if (receive_tail_index == RECEIVE_BUFFER_SIZE) {
-            receive_tail_index = 0;
-        }
+        receive_tail_index = (receive_tail_index + 1) % RECEIVE_BUFFER_SIZE;
         HAL_UART_Receive_IT(&huart3, &receive_buffer[receive_tail_index], 1);
     }
+}
+
+void USART_Transmit(uint8_t *buffer, uint16_t length) {
+    // Fire-and-forget transmission.
+    (void)HAL_UART_Transmit(&huart3, buffer, length, 10);
 }
 
 void USART_Receive(uint8_t *buffer, uint16_t length) {
     for (int i = 0; i < length; i++) {
         if (receive_head_index == receive_tail_index) {
-            return; // received all data
+            return; // Ring buffer emptied.
         }
         *buffer = receive_buffer[receive_head_index];
-        receive_head_index++;
-        if (receive_head_index == RECEIVE_BUFFER_SIZE) {
-            receive_head_index = 0;
-        }
+        receive_head_index = (receive_head_index + 1) % RECEIVE_BUFFER_SIZE;
         buffer++;
     }
 }
+
