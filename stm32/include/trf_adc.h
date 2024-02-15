@@ -1,8 +1,9 @@
 #ifndef TRF_ADC_H_
 #define TRF_ADC_H_
 
+#include <stdint.h>
+
 void ADC_Init(void);
-void ADC_Start(void);
-void ADC_Stop(void);
+uint32_t ADC_Read(int);
 
 #endif

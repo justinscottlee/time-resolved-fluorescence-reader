@@ -55,7 +55,9 @@ hal/src/stm32h7xx_hal_tim.c \
 hal/src/stm32h7xx_hal_tim_ex.c \
 hal/src/stm32h7xx_hal_uart.c \
 hal/src/stm32h7xx_hal_uart_ex.c \
-hal/src/stm32h7xx_hal_usart_ex.c
+hal/src/stm32h7xx_hal_usart_ex.c \
+hal/src/stm32h7xx_hal_adc.c \
+hal/src/stm32h7xx_hal_adc_ex.c
 
 # ASM sources
 ASM_SOURCES =  \

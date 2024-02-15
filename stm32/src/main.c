@@ -6,19 +6,15 @@
 #include "trf_scheduler.h"
 #include "trf_gpio.h"
 #include "trf_usart.h"
+#include "trf_adc.h"
 
 #include <string.h>
+#include <stdio.h>
 
 pin_t yellowled = {GPIOE, GPIO_PIN_1};
 
 void flash_led(void) {
 	GPIO_Pin_Toggle(yellowled);
-}
-
-uint8_t message[] = "Hello world!\r\n";
-
-void usart_helloworld(void) {
-	USART_Transmit(message, sizeof(message));
 }
 
 void usart_sillyreceive(void) {
@@ -28,17 +24,29 @@ void usart_sillyreceive(void) {
 	USART_Transmit(receivedata, strlen(receivedata));
 }
 
+extern uint32_t *sample_buffer;
+
+void print_data(void) {
+	uint8_t data[256];
+	memset(data, 0, 64);
+	for (int i = 0; i < 10; i++) {
+		sprintf(data, "%d: %d\r\n", i, ADC_Read(i));
+		USART_Transmit(data, strlen(data));
+	}
+}
+
 int main(void) {
 	TRF_Assert(HAL_Init() == HAL_OK);
 
 	Clock_Init();
 	GPIO_Init();
 	USART_Init();
+	ADC_Init();
 
 	GPIO_Pin_InitOutput(yellowled);
 	(void)SCH_AddTask(flash_led, 0, 500);
-	(void)SCH_AddTask(usart_helloworld, 0, 1000);
 	(void)SCH_AddTask(usart_sillyreceive, 0, 10);
+	(void)SCH_AddTask(print_data, 0, 1000);
 
 	while (1) {
 		SCH_DispatchTasks();

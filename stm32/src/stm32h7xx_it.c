@@ -49,9 +49,9 @@ void SysTick_Handler(void) {
 	SCH_Tick();
 }
 
-extern DMA_HandleTypeDef hdma_adc1;
-void DMA1_Stream0_IRQHandler(void) {
-	HAL_DMA_IRQHandler(&hdma_adc1);
+extern ADC_HandleTypeDef hadc1;
+void ADC_IRQHandler(void) {
+	HAL_ADC_IRQHandler(&hadc1);
 }
 
 extern UART_HandleTypeDef huart3;
