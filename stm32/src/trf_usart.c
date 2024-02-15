@@ -4,9 +4,9 @@
 
 UART_HandleTypeDef huart3;
 
-#define RECEIVE_BUFFER_SIZE 512
-uint8_t receive_buffer[RECEIVE_BUFFER_SIZE];
-int receive_head_index, receive_tail_index;
+#define USART_RECEIVE_BUFFER_SIZE 512
+uint8_t usart_receive_buffer[USART_RECEIVE_BUFFER_SIZE];
+int usart_receive_read_index, usart_receive_write_index;
 
 void USART_Init(void) {
     RCC_PeriphCLKInitTypeDef RCC_PeriphCLKInitStruct = {0};
@@ -42,13 +42,13 @@ void USART_Init(void) {
     HAL_NVIC_SetPriority(USART3_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USART3_IRQn);
 
-    HAL_UART_Receive_IT(&huart3, &receive_buffer[receive_tail_index], 1);
+    HAL_UART_Receive_IT(&huart3, &usart_receive_buffer[usart_receive_write_index], 1);
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart == &huart3) {
-        receive_tail_index = (receive_tail_index + 1) % RECEIVE_BUFFER_SIZE;
-        HAL_UART_Receive_IT(&huart3, &receive_buffer[receive_tail_index], 1);
+        usart_receive_write_index = (usart_receive_write_index + 1) % USART_RECEIVE_BUFFER_SIZE;
+        HAL_UART_Receive_IT(&huart3, &usart_receive_buffer[usart_receive_write_index], 1);
     }
 }
 
@@ -59,11 +59,11 @@ void USART_Transmit(uint8_t *buffer, uint16_t length) {
 
 void USART_Receive(uint8_t *buffer, uint16_t length) {
     for (int i = 0; i < length; i++) {
-        if (receive_head_index == receive_tail_index) {
+        if (usart_receive_read_index == usart_receive_write_index) {
             return; // Ring buffer emptied.
         }
-        *buffer = receive_buffer[receive_head_index];
-        receive_head_index = (receive_head_index + 1) % RECEIVE_BUFFER_SIZE;
+        *buffer = usart_receive_buffer[usart_receive_read_index];
+        usart_receive_read_index = (usart_receive_read_index + 1) % USART_RECEIVE_BUFFER_SIZE;
         buffer++;
     }
 }
