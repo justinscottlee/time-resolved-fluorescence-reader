@@ -4,6 +4,6 @@
 #include <stdint.h>
 
 void ADC_Init(void);
-uint32_t ADC_Read(int);
+uint32_t ADC_Read(int index);
 
 #endif
