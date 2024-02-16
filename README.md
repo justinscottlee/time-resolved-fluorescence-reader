@@ -9,5 +9,5 @@
 | [Amber Carreno <img src="https://www.linkedin.com/favicon.ico" width="16">](https://www.linkedin.com/in/amber-carreno-88ba98220/) | [Madison Darnauer <img src="https://www.linkedin.com/favicon.ico" width="16">](https://www.linkedin.com/in/madisondarnauer/) |
 | [Jason Gumbayan <img src="https://www.linkedin.com/favicon.ico" width="16">](https://www.linkedin.com/in/jason-gumbayan/) | [Adam Reyes <img src="https://www.linkedin.com/favicon.ico" width="16">](https://www.linkedin.com/in/adam-reyes-b24877238/) |
 | Jacob Giesing | [Cyrus Rouzitalab <img src="https://www.linkedin.com/favicon.ico" width="16">](https://www.linkedin.com/in/cyrusrouzitalab/) |
-| [Justin Lee <img src="https://www.linkedin.com/favicon.ico" width="16">](https://www.linkedin.com/in/justinscottlee/) | Ethan Zaro |
+| [Justin Lee <img src="https://www.linkedin.com/favicon.ico" width="16">](https://www.linkedin.com/in/justinscottlee/) | [Ethan Zaro <img src="https://www.linkedin.com/favicon.ico" width="16">](https://www.linkedin.com/in/zaroethan/) |
 | Luan Lam | |
