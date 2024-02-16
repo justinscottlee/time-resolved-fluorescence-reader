@@ -1,5 +1,6 @@
 #include "trf_system.h"
 #include "stm32h7xx_hal.h"
+#include "trf_stepper.h"
 
 // Returns if condition is true. Initiates system reset if condition is false.
 void TRF_Assert(bool condition) {
@@ -7,5 +8,12 @@ void TRF_Assert(bool condition) {
         return;
     } else {
         HAL_NVIC_SystemReset();
+    }
+}
+
+extern TIM_HandleTypeDef htim16;
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+    if (htim == &htim16) {
+        Stepper_Tick();
     }
 }

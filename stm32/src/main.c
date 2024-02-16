@@ -7,14 +7,19 @@
 #include "trf_gpio.h"
 #include "trf_usart.h"
 #include "trf_adc.h"
+#include "trf_stepper.h"
 
 #include <string.h>
 #include <stdio.h>
 
-pin_t yellowled = {GPIOE, GPIO_PIN_1};
+gpio_pin_t yellowled = {GPIOE, GPIO_PIN_1};
+
+stepper_motor_t stepper_x = {0};
+gpio_pin_t stepper_x_step_pin = {GPIOG, GPIO_PIN_5};
+gpio_pin_t stepper_x_dir_pin = {GPIOG, GPIO_PIN_6};
 
 void flash_led(void) {
-	GPIO_Pin_Toggle(yellowled);
+	GPIO_Pin_Toggle(&yellowled);
 }
 
 void usart_sillyreceive(void) {
@@ -35,6 +40,14 @@ void print_data(void) {
 	}
 }
 
+void stepper_test1(void) {
+	stepper_x.position = 400;
+}
+
+void stepper_test2(void) {
+	stepper_x.target_position = -400;
+}
+
 int main(void) {
 	TRF_Assert(HAL_Init() == HAL_OK);
 
@@ -42,11 +55,16 @@ int main(void) {
 	GPIO_Init();
 	USART_Init();
 	ADC_Init();
+	Stepper_Init();
+	Stepper_SetSpeed(200);
 
-	GPIO_Pin_InitOutput(yellowled);
+	Stepper_Motor_Init(&stepper_x, &stepper_x_step_pin, &stepper_x_dir_pin);
+
+	GPIO_Pin_InitOutput(&yellowled);
 	(void)SCH_AddTask(flash_led, 0, 500);
 	(void)SCH_AddTask(usart_sillyreceive, 0, 10);
-	(void)SCH_AddTask(print_data, 0, 1000);
+	(void)SCH_AddTask(stepper_test1, 0, 2000);
+	(void)SCH_AddTask(stepper_test2, 1000, 2000);
 
 	while (1) {
 		SCH_DispatchTasks();

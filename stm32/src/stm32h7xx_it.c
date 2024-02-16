@@ -58,3 +58,8 @@ extern UART_HandleTypeDef huart3;
 void USART3_IRQHandler(void) {
 	HAL_UART_IRQHandler(&huart3);
 }
+
+extern TIM_HandleTypeDef htim16;
+void TIM16_IRQHandler(void) {
+	HAL_TIM_IRQHandler(&htim16);
+}
