@@ -41,11 +41,11 @@ void print_data(void) {
 }
 
 void stepper_test1(void) {
-	stepper_x.position = 400;
+	stepper_x.target_position += 3;
 }
 
 void stepper_test2(void) {
-	stepper_x.target_position = -400;
+	stepper_x.target_position = -5;
 }
 
 int main(void) {
@@ -56,15 +56,14 @@ int main(void) {
 	USART_Init();
 	ADC_Init();
 	Stepper_Init();
-	Stepper_SetSpeed(200);
+	Stepper_SetSpeed(1);
 
 	Stepper_Motor_Init(&stepper_x, &stepper_x_step_pin, &stepper_x_dir_pin);
 
 	GPIO_Pin_InitOutput(&yellowled);
 	(void)SCH_AddTask(flash_led, 0, 500);
 	(void)SCH_AddTask(usart_sillyreceive, 0, 10);
-	(void)SCH_AddTask(stepper_test1, 0, 2000);
-	(void)SCH_AddTask(stepper_test2, 1000, 2000);
+	(void)SCH_AddTask(stepper_test1, 0, 5000);
 
 	while (1) {
 		SCH_DispatchTasks();

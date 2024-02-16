@@ -34,7 +34,7 @@ void Stepper_Init() {
 
 void Stepper_SetSpeed(uint32_t steps_per_second) {
     uint32_t prescaler = (TIM_CLK >> 16) / steps_per_second;
-    uint32_t period = (TIM_CLK / prescaler) / steps_per_second - 1;
+    uint32_t period = (TIM_CLK / (prescaler + 1) + steps_per_second >> 1) / steps_per_second - 1;
     __HAL_TIM_SET_PRESCALER(&htim16, prescaler);
     __HAL_TIM_SET_AUTORELOAD(&htim16, period);
     __HAL_TIM_SET_COUNTER(&htim16, 0);
