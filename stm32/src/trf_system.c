@@ -11,6 +11,15 @@ void TRF_Assert(bool condition) {
     }
 }
 
+void TRF_Init(void) {
+	TRF_Assert(HAL_Init() == HAL_OK);
+	Clock_Init();
+	GPIO_Init();
+	USART_Init();
+	ADC_Init();
+	Stepper_Init();	
+}
+
 extern TIM_HandleTypeDef htim16;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     if (htim == &htim16) {

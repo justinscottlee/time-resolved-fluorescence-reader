@@ -26,10 +26,6 @@ void stepper_test1(void) {
 	stepper_x.target_position += 1;
 }
 
-void stepper_test2(void) {
-	stepper_x.target_position -= 50;
-}
-
 void print_adc_buffer(void) {
 	uint8_t buffer[16*2048];
 	int size = 0;
@@ -42,20 +38,15 @@ void print_adc_buffer(void) {
 }
 
 int main(void) {
-	TRF_Assert(HAL_Init() == HAL_OK);
+	TRF_Init();
 
-	Clock_Init();
-	GPIO_Init();
-	USART_Init();
-	ADC_Init();
-	Stepper_Init();	
 	Stepper_SetSpeed(100);
-	ADC_SetSampleRate(500000);
-
 	Stepper_Motor_Init(&stepper_x, &stepper_x_step_pin, &stepper_x_dir_pin);
 
 	GPIO_Pin_InitOutput(&yellowled);
 	(void)SCH_AddTask(flash_led, 0, 500);
+
+	ADC_SetSampleRate(500000);
 	(void)SCH_AddTask(print_adc_buffer, 1000, 0);
 
 	while (1) {

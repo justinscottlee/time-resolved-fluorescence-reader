@@ -4,5 +4,6 @@
 #include <stdbool.h>
 
 void TRF_Assert(bool condition);
+void TRF_Init(void);
 
 #endif

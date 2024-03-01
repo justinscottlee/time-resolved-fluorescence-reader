@@ -14,7 +14,7 @@ typedef struct stepper_motor_node {
 
 stepper_motor_node_t *motor_ll_head = NULL;
 
-void Stepper_Init() {
+void Stepper_Init(void) {
     __HAL_RCC_TIM16_CLK_ENABLE();
 
     HAL_NVIC_SetPriority(TIM16_IRQn, 0, 0);
@@ -40,7 +40,7 @@ void Stepper_SetSpeed(uint32_t steps_per_second) {
     __HAL_TIM_SET_COUNTER(&htim16, 0);
 }
 
-void Stepper_Tick() {
+void Stepper_Tick(void) {
     stepper_motor_node_t *current_node = motor_ll_head;
     while(current_node != NULL) {
         stepper_motor_t *motor = current_node->motor;
