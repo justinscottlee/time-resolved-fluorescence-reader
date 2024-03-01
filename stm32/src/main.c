@@ -22,30 +22,23 @@ void flash_led(void) {
 	GPIO_Pin_Toggle(&yellowled);
 }
 
-void usart_sillyreceive(void) {
-	static uint8_t receivedata[256];
-	memset(receivedata, 0, 256);
-	USART_Receive(receivedata, 256);
-	USART_Transmit(receivedata, strlen(receivedata));
-}
-
-extern uint32_t *sample_buffer;
-
-void print_data(void) {
-	uint8_t data[256];
-	memset(data, 0, 64);
-	for (int i = 0; i < 10; i++) {
-		sprintf(data, "%d: %d\r\n", i, ADC_Read(i));
-		USART_Transmit(data, strlen(data));
-	}
-}
-
 void stepper_test1(void) {
-	stepper_x.target_position += 3;
+	stepper_x.target_position += 1;
 }
 
 void stepper_test2(void) {
-	stepper_x.target_position = -5;
+	stepper_x.target_position -= 50;
+}
+
+void print_adc_buffer(void) {
+	uint8_t buffer[16*2048];
+	int size = 0;
+	for (int i = 0; i < 2048; i++) {
+		size += sprintf(buffer + size, "%d\r\n", ADC_Read(i));
+	}
+	for (int i = 0; i < size; i += 32) {
+		USART_Transmit(buffer + i, 32);
+	}
 }
 
 int main(void) {
@@ -55,15 +48,15 @@ int main(void) {
 	GPIO_Init();
 	USART_Init();
 	ADC_Init();
-	Stepper_Init();
-	Stepper_SetSpeed(1);
+	Stepper_Init();	
+	Stepper_SetSpeed(100);
+	ADC_SetSampleRate(500000);
 
 	Stepper_Motor_Init(&stepper_x, &stepper_x_step_pin, &stepper_x_dir_pin);
 
 	GPIO_Pin_InitOutput(&yellowled);
 	(void)SCH_AddTask(flash_led, 0, 500);
-	(void)SCH_AddTask(usart_sillyreceive, 0, 10);
-	(void)SCH_AddTask(stepper_test1, 0, 5000);
+	(void)SCH_AddTask(print_adc_buffer, 1000, 0);
 
 	while (1) {
 		SCH_DispatchTasks();

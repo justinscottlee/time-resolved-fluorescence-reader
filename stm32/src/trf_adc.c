@@ -2,10 +2,12 @@
 #include "stm32h7xx_hal.h"
 #include "trf_system.h"
 
+#define TIM_CLK 275000000
+
 ADC_HandleTypeDef hadc1;
 TIM_HandleTypeDef htim15;
 
-#define ADC_BUFFER_SIZE 1024
+#define ADC_BUFFER_SIZE 2048
 uint32_t adc_buffer[ADC_BUFFER_SIZE];
 uint32_t adc_write_index;
 
@@ -95,6 +97,14 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
         adc_buffer[adc_write_index] = HAL_ADC_GetValue(&hadc1);
         adc_write_index = (adc_write_index + 1) % ADC_BUFFER_SIZE;
     }
+}
+
+void ADC_SetSampleRate(uint32_t samples_per_second) {
+    uint32_t prescaler = (TIM_CLK >> 16) / samples_per_second;
+    uint32_t period = (TIM_CLK / (prescaler + 1) + samples_per_second >> 1) / samples_per_second - 1;
+    __HAL_TIM_SET_PRESCALER(&htim15, prescaler);
+    __HAL_TIM_SET_AUTORELOAD(&htim15, period);
+    __HAL_TIM_SET_COUNTER(&htim15, 0);
 }
 
 uint32_t ADC_Read(int index) {
