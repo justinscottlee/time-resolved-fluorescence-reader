@@ -32,6 +32,7 @@ void Stepper_Init(void) {
     HAL_TIM_Base_Start_IT(&htim16);
 }
 
+// Update timer parameters to set steps/sec of stepper motor.
 void Stepper_SetSpeed(uint32_t steps_per_second) {
     uint32_t prescaler = (TIM_CLK >> 16) / steps_per_second;
     uint32_t period = (TIM_CLK / (prescaler + 1) + steps_per_second >> 1) / steps_per_second - 1;
@@ -40,6 +41,7 @@ void Stepper_SetSpeed(uint32_t steps_per_second) {
     __HAL_TIM_SET_COUNTER(&htim16, 0);
 }
 
+// Iterates through all initialized stepper motors setting the direction and step pins.
 void Stepper_Tick(void) {
     stepper_motor_node_t *current_node = motor_ll_head;
     while(current_node != NULL) {
@@ -62,6 +64,7 @@ void Stepper_Tick(void) {
     }
 }
 
+// Initialize the given stepper_motor_t struct and append it to the linked list of stepper motors.
 void Stepper_Motor_Init(stepper_motor_t *stepper_motor, gpio_pin_t *step_pin, gpio_pin_t *dir_pin) {
     stepper_motor->step_pin = step_pin;
     stepper_motor->dir_pin = dir_pin;

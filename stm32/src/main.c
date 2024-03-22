@@ -24,10 +24,12 @@ gpio_pin_t stepper_y_step_pin = {GPIOG, GPIO_PIN_7};
 gpio_pin_t stepper_y_dir_pin = {GPIOG, GPIO_PIN_4};
 gpio_pin_t y_endstop = {GPIOD, GPIO_PIN_10};
 
+// Task to flash the yellow LED.
 void flash_led(void) {
 	GPIO_Pin_Toggle(&yellowled);
 }
 
+// Task to home the X-axis stepper motor.
 void home_x(void) {
 	if (stepper_x.homed == false) {
 		if (GPIO_Pin_Read(&x_endstop) == 0) {
@@ -41,6 +43,7 @@ void home_x(void) {
 	}
 }
 
+// Task to home the Y-axis stepper motor.
 void home_y(void) {
 	if (stepper_y.homed == false) {
 		if (GPIO_Pin_Read(&y_endstop) == 0) {
@@ -54,6 +57,7 @@ void home_y(void) {
 	}
 }
 
+// Capture a single waveform at the specified sample rate.
 void capture_waveform(int sample_rate) {
 	ADC_SetSampleRate(sample_rate);
 	ADC_Start();

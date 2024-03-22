@@ -11,10 +11,12 @@ TIM_HandleTypeDef htim15;
 uint32_t adc_buffer[ADC_BUFFER_SIZE];
 uint32_t adc_write_index;
 
+// Begin measuring continuously from the ADC into the adc_buffer.
 void ADC_Start(void) {
     TRF_Assert(HAL_TIM_Base_Start(&htim15) == HAL_OK);
 }
 
+// Halt measuring from the ADC.
 void ADC_Stop(void) {
     TRF_Assert(HAL_TIM_Base_Stop(&htim15) == HAL_OK);
 }
@@ -98,6 +100,7 @@ void ADC_Init(void) {
     HAL_ADC_Start_IT(&hadc1);
 }
 
+// ADC conversion complete callback to store the measured value in the buffer.
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
     if (hadc == &hadc1) {
         adc_buffer[adc_write_index] = HAL_ADC_GetValue(&hadc1);
@@ -105,6 +108,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
     }
 }
 
+// Update the sample rate for the ADC.
 void ADC_SetSampleRate(uint32_t samples_per_second) {
     uint32_t prescaler = (TIM_CLK >> 16) / samples_per_second;
     uint32_t period = (TIM_CLK / (prescaler + 1) + samples_per_second >> 1) / samples_per_second - 1;
@@ -113,6 +117,7 @@ void ADC_SetSampleRate(uint32_t samples_per_second) {
     __HAL_TIM_SET_COUNTER(&htim15, 0);
 }
 
+// Access a ADC value from the buffer.
 uint32_t ADC_Read(int index) {
     return adc_buffer[index];
 }

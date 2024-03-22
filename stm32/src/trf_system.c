@@ -11,6 +11,7 @@ void TRF_Assert(bool condition) {
     }
 }
 
+// Initializes all the hardware peripherals.
 void TRF_Init(void) {
 	TRF_Assert(HAL_Init() == HAL_OK);
 	Clock_Init();
@@ -21,6 +22,7 @@ void TRF_Init(void) {
 }
 
 extern TIM_HandleTypeDef htim16;
+// Timer callback to tick the stepper motor logic for steps/sec control.
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     if (htim == &htim16) {
         Stepper_Tick();

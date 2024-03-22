@@ -45,6 +45,7 @@ void USART_Init(void) {
     HAL_UART_Receive_IT(&huart3, &usart_receive_buffer[usart_receive_write_index], 1);
 }
 
+// Receive complete callback for USART3 to store received byte in ring buffer.
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart == &huart3) {
         usart_receive_write_index = (usart_receive_write_index + 1) % USART_RECEIVE_BUFFER_SIZE;
@@ -52,11 +53,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     }
 }
 
+// Simple fire-and-forget transmission.
 void USART_Transmit(uint8_t *buffer, uint16_t length) {
-    // Fire-and-forget transmission.
     (void)HAL_UART_Transmit(&huart3, buffer, length, 10);
 }
 
+// Read N bytes from the ring buffer.
 void USART_Receive(uint8_t *buffer, uint16_t length) {
     for (int i = 0; i < length; i++) {
         if (usart_receive_read_index == usart_receive_write_index) {
@@ -67,4 +69,3 @@ void USART_Receive(uint8_t *buffer, uint16_t length) {
         buffer++;
     }
 }
-
