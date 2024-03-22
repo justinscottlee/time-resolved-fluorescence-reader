@@ -17,37 +17,56 @@ gpio_pin_t yellowled = {GPIOE, GPIO_PIN_1};
 stepper_motor_t stepper_x = {0};
 gpio_pin_t stepper_x_step_pin = {GPIOG, GPIO_PIN_5};
 gpio_pin_t stepper_x_dir_pin = {GPIOG, GPIO_PIN_6};
+gpio_pin_t x_endstop = {GPIOG, GPIO_PIN_8};
+
+stepper_motor_t stepper_y = {0};
+gpio_pin_t stepper_y_step_pin = {GPIOG, GPIO_PIN_7};
+gpio_pin_t stepper_y_dir_pin = {GPIOG, GPIO_PIN_4};
+gpio_pin_t y_endstop = {GPIOD, GPIO_PIN_10};
 
 void flash_led(void) {
 	GPIO_Pin_Toggle(&yellowled);
 }
 
-void stepper_test1(void) {
-	stepper_x.target_position += 1;
+void home_x(void) {
+	if (stepper_x.homed == false) {
+		if (GPIO_Pin_Read(&x_endstop) == 0) {
+			stepper_x.homed = true;
+			stepper_x.position = 0;
+			stepper_x.target_position = 0;
+		}
+		else if (stepper_x.position == stepper_x.target_position) {
+			stepper_x.target_position -= 1;
+		}
+	}
 }
 
-void print_adc_buffer(void) {
-	uint8_t buffer[16*2048];
-	int size = 0;
-	for (int i = 0; i < 2048; i++) {
-		size += sprintf(buffer + size, "%d\r\n", ADC_Read(i));
-	}
-	for (int i = 0; i < size; i += 32) {
-		USART_Transmit(buffer + i, 32);
+void home_y(void) {
+	if (stepper_y.homed == false) {
+		if (GPIO_Pin_Read(&y_endstop) == 0) {
+			stepper_y.homed = true;
+			stepper_y.position = 0;
+			stepper_y.target_position = 0;
+		}
+		else if (stepper_y.position == stepper_y.target_position) {
+			stepper_y.target_position -= 1;
+		}
 	}
 }
 
 int main(void) {
 	TRF_Init();
 
-	Stepper_SetSpeed(100);
+	Stepper_SetSpeed(10000);
 	Stepper_Motor_Init(&stepper_x, &stepper_x_step_pin, &stepper_x_dir_pin);
+	Stepper_Motor_Init(&stepper_y, &stepper_y_step_pin, &stepper_y_dir_pin);
 
 	GPIO_Pin_InitOutput(&yellowled);
 	(void)SCH_AddTask(flash_led, 0, 500);
+	(void)SCH_AddTask(home_x, 0, 1);
+	(void)SCH_AddTask(home_y, 0, 1);
 
 	ADC_SetSampleRate(500000);
-	(void)SCH_AddTask(print_adc_buffer, 1000, 0);
 
 	while (1) {
 		SCH_DispatchTasks();

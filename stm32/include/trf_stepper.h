@@ -8,6 +8,7 @@ typedef struct stepper_motor {
     gpio_pin_t *dir_pin;
     int32_t position;
     int32_t target_position;
+    bool homed;
 } stepper_motor_t;
 
 void Stepper_Init(void);
