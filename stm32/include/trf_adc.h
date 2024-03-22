@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+void ADC_Start(void);
+void ADC_Stop(void);
 void ADC_Init(void);
 void ADC_SetSampleRate(uint32_t samples_per_second);
 uint32_t ADC_Read(int index);

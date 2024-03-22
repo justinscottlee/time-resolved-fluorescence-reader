@@ -54,6 +54,12 @@ void home_y(void) {
 	}
 }
 
+void capture_waveform(int sample_rate) {
+	ADC_SetSampleRate(sample_rate);
+	ADC_Start();
+	SCH_AddTask(ADC_Stop, 20, 0);
+}
+
 int main(void) {
 	TRF_Init();
 
@@ -66,7 +72,7 @@ int main(void) {
 	(void)SCH_AddTask(home_x, 0, 1);
 	(void)SCH_AddTask(home_y, 0, 1);
 
-	ADC_SetSampleRate(500000);
+	capture_waveform(400000);
 
 	while (1) {
 		SCH_DispatchTasks();

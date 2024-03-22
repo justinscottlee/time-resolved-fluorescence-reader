@@ -11,6 +11,14 @@ TIM_HandleTypeDef htim15;
 uint32_t adc_buffer[ADC_BUFFER_SIZE];
 uint32_t adc_write_index;
 
+void ADC_Start(void) {
+    TRF_Assert(HAL_TIM_Base_Start(&htim15) == HAL_OK);
+}
+
+void ADC_Stop(void) {
+    TRF_Assert(HAL_TIM_Base_Stop(&htim15) == HAL_OK);
+}
+
 void ADC_Init(void) {
     __HAL_RCC_TIM15_CLK_ENABLE();
 
@@ -31,8 +39,6 @@ void ADC_Init(void) {
     TIM_MasterConfigStruct.MasterOutputTrigger = TIM_TRGO_UPDATE;
     TIM_MasterConfigStruct.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
     TRF_Assert(HAL_TIMEx_MasterConfigSynchronization(&htim15, &TIM_MasterConfigStruct) == HAL_OK);
-
-    TRF_Assert(HAL_TIM_Base_Start(&htim15) == HAL_OK);
 
     RCC_PeriphCLKInitTypeDef RCC_PeriphCLKInitStruct = {0};
     RCC_PeriphCLKInitStruct.PeriphClockSelection = RCC_PERIPHCLK_ADC;
