@@ -29,6 +29,13 @@ void SCH_RemoveTask(uint32_t index) {
     tasks[index].FUNC = NULL;
 }
 
+// Clear all tasks from the scheduler.
+void SCH_ClearTasks(void) {
+    for (uint32_t i = 0; i < MAX_TASKS; i++) {
+        SCH_RemoveTask(i);
+    }
+}
+
 // Execute all tasks ready for execution.
 void SCH_DispatchTasks(void) {
     for (uint32_t i = 0; i < MAX_TASKS; i++) {
