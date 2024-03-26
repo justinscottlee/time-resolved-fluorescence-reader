@@ -4,7 +4,7 @@
 
 UART_HandleTypeDef huart3;
 
-#define USART_RECEIVE_BUFFER_SIZE 512
+#define USART_RECEIVE_BUFFER_SIZE 1024
 uint8_t usart_receive_buffer[USART_RECEIVE_BUFFER_SIZE];
 int usart_receive_read_index, usart_receive_write_index;
 
@@ -59,10 +59,11 @@ void USART_Transmit(uint8_t *buffer, uint16_t length) {
 }
 
 // Read N bytes from the ring buffer.
-void USART_Receive(uint8_t *buffer, uint16_t length) {
+int USART_Receive(uint8_t *buffer, uint16_t length) {
+    int bytes_received = 0;
     for (int i = 0; i < length; i++) {
         if (usart_receive_read_index == usart_receive_write_index) {
-            return; // Ring buffer emptied.
+            return bytes_received; // Ring buffer emptied.
         }
         *buffer = usart_receive_buffer[usart_receive_read_index];
         usart_receive_read_index = (usart_receive_read_index + 1) % USART_RECEIVE_BUFFER_SIZE;
