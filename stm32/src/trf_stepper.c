@@ -89,3 +89,8 @@ void Stepper_Motor_Init(stepper_motor_t *stepper_motor, gpio_pin_t *step_pin, gp
         stepper_motor_lliter->next->next = NULL;
     }
 }
+
+// Returns true if the stepper motor has reached its target position.
+bool Stepper_Motor_TargetReached(stepper_motor_t *stepper_motor) {
+    return stepper_motor->position == stepper_motor->target_position;
+}
