@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define ADC_BUFFER_SIZE 2048
+
 void ADC_Start(void);
 void ADC_Stop(void);
 void ADC_Init(void);

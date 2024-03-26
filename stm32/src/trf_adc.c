@@ -7,7 +7,6 @@
 ADC_HandleTypeDef hadc1;
 TIM_HandleTypeDef htim15;
 
-#define ADC_BUFFER_SIZE 2048
 uint32_t adc_buffer[ADC_BUFFER_SIZE];
 uint32_t adc_write_index;
 
