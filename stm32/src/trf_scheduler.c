@@ -30,7 +30,9 @@ void SCH_RemoveTask(uint32_t index) {
 }
 
 // Clear all tasks from the scheduler.
+bool cleared = false;
 void SCH_ClearTasks(void) {
+    cleared = true;
     for (uint32_t i = 0; i < MAX_TASKS; i++) {
         SCH_RemoveTask(i);
     }
@@ -38,6 +40,7 @@ void SCH_ClearTasks(void) {
 
 // Execute all tasks ready for execution.
 void SCH_DispatchTasks(void) {
+    cleared = false;
     for (uint32_t i = 0; i < MAX_TASKS; i++) {
         if (tasks[i].FUNC == NULL) {
             continue;
@@ -45,6 +48,9 @@ void SCH_DispatchTasks(void) {
         if (tasks[i].READY) {
             tasks[i].READY--;
             tasks[i].FUNC();
+            if (cleared) {
+                return;
+            }
             if (tasks[i].PERIOD == 0) {
                 SCH_RemoveTask(i);
             }
