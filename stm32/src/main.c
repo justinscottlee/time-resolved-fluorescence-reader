@@ -13,10 +13,12 @@
 #include <stdio.h>
 
 // CALIBRATION CONSTANTS
-#define MICROPLATE_WELL_ORIGIN_X 10000
-#define MICROPLATE_WELL_ORIGIN_Y 5000
-#define STEPS_PER_WELL_X 500
-#define STEPS_PER_WELL_Y 250
+// ACTUAL X ORIGIN IS -6500
+// ACTUAL Y ORIGIN IS 16500
+#define MICROPLATE_WELL_ORIGIN_X -6500
+#define MICROPLATE_WELL_ORIGIN_Y 16500
+#define STEPS_PER_WELL_X -907
+#define STEPS_PER_WELL_Y 3591
 
 typedef enum {
 	STATE_AWAIT_JOB,
@@ -55,9 +57,9 @@ gpio_pin_t stepper_x_dir_pin = {GPIOG, GPIO_PIN_6};
 gpio_pin_t x_endstop = {GPIOG, GPIO_PIN_8};
 
 stepper_motor_t stepper_y = {0};
-gpio_pin_t stepper_y_step_pin = {GPIOG, GPIO_PIN_7};
+gpio_pin_t stepper_y_step_pin = {GPIOF, GPIO_PIN_12};
 gpio_pin_t stepper_y_dir_pin = {GPIOG, GPIO_PIN_4};
-gpio_pin_t y_endstop = {GPIOD, GPIO_PIN_10};
+gpio_pin_t y_endstop = {GPIOG, GPIO_PIN_14};
 
 gpio_pin_t led_power_selector_1000mA = {GPIOE, GPIO_PIN_13};
 gpio_pin_t led_power_selector_100mA = {GPIOE, GPIO_PIN_15};
@@ -72,14 +74,14 @@ void flash_led(void) {
 // Capture a single waveform at the specified sample rate.
 void capture_waveform(void) {
 	ADC_Start();
-	SCH_AddTask(ADC_Stop, 25, 0);
+	SCH_AddTask(ADC_Stop, 100, 0);
 }
 
 void check_waveform_clipped(void) {
 	disable_led();
 	bool clipped = false;
 	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
-		if (ADC_Read(i) < 512) {
+		if (ADC_Read(i) < 512) { // clip threshold
 			clipped = true;
 			break;
 		}
@@ -116,13 +118,13 @@ void disable_led() {
 // Home the X-axis stepper motor by 1 step.
 void home_x(void) {
 	if (stepper_x.homed == false) {
-		if (GPIO_Pin_Read(&x_endstop) == 0) {
+		if (GPIO_Pin_Read(&x_endstop)) {
 			stepper_x.homed = true;
 			stepper_x.position = 0;
 			stepper_x.target_position = 0;
 		}
 		else if (stepper_x.position == stepper_x.target_position) {
-			stepper_x.target_position -= 1;
+			stepper_x.target_position += 2;
 		}
 	}
 
@@ -134,13 +136,13 @@ void home_x(void) {
 // Home the Y-axis stepper motor by 1 step.
 void home_y(void) {
 	if (stepper_y.homed == false) {
-		if (GPIO_Pin_Read(&y_endstop) == 0) {
+		if (GPIO_Pin_Read(&y_endstop)) {
 			stepper_y.homed = true;
 			stepper_y.position = 0;
 			stepper_y.target_position = 0;
 		}
 		else if (stepper_y.position == stepper_y.target_position) {
-			stepper_y.target_position -= 1;
+			stepper_y.target_position -= 2;
 		}
 	}
 
@@ -182,6 +184,7 @@ void start_home_axes(void) {
 	current_state = STATE_HOME_AXES;
 	SCH_AddTask(home_x, 0, 1);
 	SCH_AddTask(home_y, 0, 1);
+	SCH_AddTask(log_homed, 0, 100);
 }
 
 // Setup MEASURE_WELLS superstate.
@@ -208,17 +211,18 @@ void start_capture_waveform() {
 	SCH_ClearTasks();
 	current_state = STATE_CAPTURE_WAVEFORM;
 	select_power_level(led_power_level);
-	SCH_AddTask(capture_waveform, 25, 0);
-	SCH_AddTask(check_waveform_clipped, 50, 0);
+	SCH_AddTask(capture_waveform, 50, 0);
+	SCH_AddTask(check_waveform_clipped, 200, 0);
 }
 
 // Setup PROCESS_WAVEFORM state.
 void start_process_waveform(void) {
 	SCH_ClearTasks();
 	current_state = STATE_PROCESS_WAVEFORM;
-	// find zero value of waveform.
-	// integrate over waveform from zero part to 2ms.
-	// save the value to concentration_buffer.
+	// Find background intensity of signal.
+	// Find starting sample of the waveform.
+	// Integrate over waveform from starting sample to 2ms.
+	// Save the value to the concentration_buffer.
 	current_well++;
 	start_move_to_well();
 }
@@ -234,9 +238,12 @@ void start_report_results(void) {
 int main(void) {
 	TRF_Init();
 
-	Stepper_SetSpeed(10000);
+	Stepper_SetSpeed(1000);
 	Stepper_Motor_Init(&stepper_x, &stepper_x_step_pin, &stepper_x_dir_pin);
 	Stepper_Motor_Init(&stepper_y, &stepper_y_step_pin, &stepper_y_dir_pin);
+
+	GPIO_Pin_InitInput(&x_endstop, GPIO_PULLDOWN);
+	GPIO_Pin_InitInput(&y_endstop, GPIO_PULLDOWN);
 
 	GPIO_Pin_InitOutput(&led_power_selector_1000mA);
 	GPIO_Pin_InitOutput(&led_power_selector_100mA);
@@ -244,7 +251,19 @@ int main(void) {
 	GPIO_Pin_InitOutput(&led_power_selector_1mA);
 	disable_led();
 
-	start_await_job();
+	// fake job
+	int job_ind = 0;
+	for (int x = 0; x < 8; x++) {
+		for (int y = 0; y < 12; y++) {
+			job_buffer[job_ind * 2] = x;
+			job_buffer[job_ind * 2 + 1] = y;
+			job_ind++;
+		}
+	}
+	job_buffer[job_ind * 2] = 0xF0;
+	job_buffer_index = job_ind * 2 + 1;
+
+	start_home_axes();
 
 	while (1) {
 		SCH_DispatchTasks();
