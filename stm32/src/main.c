@@ -12,13 +12,17 @@
 #include <string.h>
 #include <stdio.h>
 
+// CALIBRATION CONSTANTS 24-well
+//#define MICROPLATE_WELL_ORIGIN_X -8000
+//#define MICROPLATE_WELL_ORIGIN_Y -30000
+//#define STEPS_PER_WELL_X -1933
+//#define STEPS_PER_WELL_Y -7650
+
 // CALIBRATION CONSTANTS
-// ACTUAL X ORIGIN IS -6500
-// ACTUAL Y ORIGIN IS 16500
-#define MICROPLATE_WELL_ORIGIN_X -6500
-#define MICROPLATE_WELL_ORIGIN_Y 16500
-#define STEPS_PER_WELL_X -907
-#define STEPS_PER_WELL_Y 3591
+#define MICROPLATE_WELL_ORIGIN_X -8000
+#define MICROPLATE_WELL_ORIGIN_Y -30000
+#define STEPS_PER_WELL_X -1933
+#define STEPS_PER_WELL_Y -7650
 
 typedef enum {
 	STATE_AWAIT_JOB,
@@ -124,7 +128,7 @@ void home_x(void) {
 			stepper_x.target_position = 0;
 		}
 		else if (stepper_x.position == stepper_x.target_position) {
-			stepper_x.target_position += 2;
+			stepper_x.target_position += 10;
 		}
 	}
 
@@ -142,7 +146,7 @@ void home_y(void) {
 			stepper_y.target_position = 0;
 		}
 		else if (stepper_y.position == stepper_y.target_position) {
-			stepper_y.target_position -= 2;
+			stepper_y.target_position += 10;
 		}
 	}
 
@@ -184,7 +188,6 @@ void start_home_axes(void) {
 	current_state = STATE_HOME_AXES;
 	SCH_AddTask(home_x, 0, 1);
 	SCH_AddTask(home_y, 0, 1);
-	SCH_AddTask(log_homed, 0, 100);
 }
 
 // Setup MEASURE_WELLS superstate.
@@ -238,7 +241,7 @@ void start_report_results(void) {
 int main(void) {
 	TRF_Init();
 
-	Stepper_SetSpeed(1000);
+	Stepper_SetSpeed(7500);
 	Stepper_Motor_Init(&stepper_x, &stepper_x_step_pin, &stepper_x_dir_pin);
 	Stepper_Motor_Init(&stepper_y, &stepper_y_step_pin, &stepper_y_dir_pin);
 
@@ -251,10 +254,9 @@ int main(void) {
 	GPIO_Pin_InitOutput(&led_power_selector_1mA);
 	disable_led();
 
-	// fake job
 	int job_ind = 0;
-	for (int x = 0; x < 8; x++) {
-		for (int y = 0; y < 12; y++) {
+	for (int x = 0; x < 4; x++) {
+		for (int y = 0; y < 6; y++) {
 			job_buffer[job_ind * 2] = x;
 			job_buffer[job_ind * 2 + 1] = y;
 			job_ind++;
