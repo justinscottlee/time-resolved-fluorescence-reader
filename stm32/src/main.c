@@ -11,6 +11,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 // CALIBRATION CONSTANTS 24-well
 //#define MICROPLATE_WELL_ORIGIN_X -8000
@@ -47,7 +48,7 @@ state_t current_state;
 uint8_t job_buffer[1024];
 int job_buffer_index = 0;
 
-uint32_t concentration_buffer[512];
+uint32_t concentration_buffer[384];
 
 int current_well;
 
@@ -222,10 +223,50 @@ void start_capture_waveform() {
 void start_process_waveform(void) {
 	SCH_ClearTasks();
 	current_state = STATE_PROCESS_WAVEFORM;
-	// Find background intensity of signal.
-	// Find starting sample of the waveform.
-	// Integrate over waveform from starting sample to 2ms.
-	// Save the value to the concentration_buffer.
+	uint16_t frequency[65536] = {0};
+	uint16_t max = 0;
+	uint16_t mode = 0;
+	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
+		uint16_t sample = ADC_Read(i);
+		frequency[sample]++;
+		if (frequency[sample] > max) {
+			max = frequency[sample];
+			mode = sample;
+		}
+	}
+
+	uint16_t minimum = 32678;
+	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
+		uint16_t sample = ADC_Read(i);
+		if (sample < minimum) {
+			minimum = sample;
+		}
+	}
+
+	bool locked = false;
+	uint16_t dynamic_range = mode - minimum;
+	int start_index = 0;
+	int end_index = 0;
+	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
+		uint16_t sample = ADC_Read(i);
+		if (!locked) {
+			if (abs(mode - sample) < ((dynamic_range >> 5) + 1)) {
+				locked = true;
+			}
+		} else {
+			if (sample < mode - (dynamic_range >> 1)) {
+				start_index = i + 293;
+				end_index = start_index + 585;
+				break;
+			}
+		}
+	}
+
+	for (int i = start_index; i < end_index; i++) {
+		uint16_t sample = ADC_Read(i);
+		concentration_buffer[current_well] += mode - sample;
+	}
+	
 	current_well++;
 	start_move_to_well();
 }
@@ -240,6 +281,8 @@ void start_report_results(void) {
 
 int main(void) {
 	TRF_Init();
+
+	ADC_SetSampleRate(292571);
 
 	Stepper_SetSpeed(7500);
 	Stepper_Motor_Init(&stepper_x, &stepper_x_step_pin, &stepper_x_dir_pin);
@@ -265,7 +308,7 @@ int main(void) {
 	job_buffer[job_ind * 2] = 0xF0;
 	job_buffer_index = job_ind * 2 + 1;
 
-	start_home_axes();
+	SCH_AddTask(start_capture_waveform, 1000, 0);
 
 	while (1) {
 		SCH_DispatchTasks();

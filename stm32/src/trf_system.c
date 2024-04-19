@@ -14,9 +14,9 @@ void TRF_Assert(bool condition) {
 }
 
 void LED_PWM_Init(void) {
-    int prescaler = 20;
-    int period = 65475;
-    int pulse = 16384;
+    int prescaler = 14;
+    int period = 64155;
+    int pulse = 18336;
 
     __HAL_RCC_TIM14_CLK_ENABLE();
 
@@ -43,6 +43,8 @@ void LED_PWM_Init(void) {
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF9_TIM14;
     HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+
+    TRF_Assert(HAL_TIM_PWM_Start(&htim14, TIM_CHANNEL_1) == HAL_OK);
 }
 
 // Initializes all the hardware peripherals.
