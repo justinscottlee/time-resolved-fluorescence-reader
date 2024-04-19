@@ -223,11 +223,14 @@ void start_capture_waveform() {
 void start_process_waveform(void) {
 	SCH_ClearTasks();
 	current_state = STATE_PROCESS_WAVEFORM;
-	uint16_t frequency[65536] = {0};
-	uint16_t max = 0;
-	uint16_t mode = 0;
+	int frequency[65536] = {0};
+	int max = 0;
+	int mode = 0;
 	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
-		uint16_t sample = ADC_Read(i);
+		int sample = ADC_Read(i);
+		if (sample < 0 || sample > 65535) {
+			continue;
+		}
 		frequency[sample]++;
 		if (frequency[sample] > max) {
 			max = frequency[sample];
@@ -235,20 +238,20 @@ void start_process_waveform(void) {
 		}
 	}
 
-	uint16_t minimum = 32678;
+	int minimum = 32678;
 	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
-		uint16_t sample = ADC_Read(i);
+		int sample = ADC_Read(i);
 		if (sample < minimum) {
 			minimum = sample;
 		}
 	}
 
 	bool locked = false;
-	uint16_t dynamic_range = mode - minimum;
+	int dynamic_range = mode - minimum;
 	int start_index = 0;
 	int end_index = 0;
 	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
-		uint16_t sample = ADC_Read(i);
+		int sample = ADC_Read(i);
 		if (!locked) {
 			if (abs(mode - sample) < ((dynamic_range >> 5) + 1)) {
 				locked = true;
@@ -263,10 +266,10 @@ void start_process_waveform(void) {
 	}
 
 	for (int i = start_index; i < end_index; i++) {
-		uint16_t sample = ADC_Read(i);
+		int sample = ADC_Read(i);
 		concentration_buffer[current_well] += mode - sample;
 	}
-	
+
 	current_well++;
 	start_move_to_well();
 }
