@@ -14,9 +14,9 @@ void TRF_Assert(bool condition) {
 }
 
 void LED_PWM_Init(void) {
-    int prescaler = 14;
-    int period = 64155;
-    int pulse = 18336;
+    int prescaler = 200;
+    int period = 64475;
+    int pulse = 16384;
 
     __HAL_RCC_TIM14_CLK_ENABLE();
 

@@ -14,16 +14,19 @@
 #include <stdlib.h>
 
 // CALIBRATION CONSTANTS 24-well
-//#define MICROPLATE_WELL_ORIGIN_X -8000
-//#define MICROPLATE_WELL_ORIGIN_Y -30000
-//#define STEPS_PER_WELL_X -1933
-//#define STEPS_PER_WELL_Y -7650
+//#define MICROPLATE_WELL_ORIGIN_X -8600
+//#define MICROPLATE_WELL_ORIGIN_Y -22500
+//#define STEPS_PER_WELL_X -1967
+//#define STEPS_PER_WELL_Y -7750
 
+
+//#define MICROPLATE_WELL_ORIGIN_X -7975
+//#define MICROPLATE_WELL_ORIGIN_Y -23000
 // CALIBRATION CONSTANTS
-#define MICROPLATE_WELL_ORIGIN_X -8000
-#define MICROPLATE_WELL_ORIGIN_Y -30000
-#define STEPS_PER_WELL_X -1933
-#define STEPS_PER_WELL_Y -7650
+#define MICROPLATE_WELL_ORIGIN_X -7975
+#define MICROPLATE_WELL_ORIGIN_Y -23000
+#define STEPS_PER_WELL_X -1983
+#define STEPS_PER_WELL_Y -8000
 
 typedef enum {
 	STATE_AWAIT_JOB,
@@ -219,57 +222,55 @@ void start_capture_waveform() {
 	SCH_AddTask(check_waveform_clipped, 200, 0);
 }
 
+uint16_t frequency[40000];
+
 // Setup PROCESS_WAVEFORM state.
 void start_process_waveform(void) {
 	SCH_ClearTasks();
-	current_state = STATE_PROCESS_WAVEFORM;
-	int frequency[65536] = {0};
-	int max = 0;
-	int mode = 0;
+
+/*
 	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
 		int sample = ADC_Read(i);
-		if (sample < 0 || sample > 65535) {
+		char buffer[64];
+		sprintf(buffer, "%d\r\n", sample);
+		USART_Transmit(buffer, strlen(buffer));
+	}
+
+	while (true) {
+
+	}*/
+
+	current_state = STATE_PROCESS_WAVEFORM;
+
+	extern uint32_t adc_write_index;
+
+	for (int i = 0; i < 40000; i++) {
+		frequency[i] = 0;
+	}
+
+	int max = 0;
+	int mode = 0;
+
+	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
+		int sample = ADC_Read(i);
+		if (sample >= 50000 || sample < 10000) {
 			continue;
 		}
-		frequency[sample]++;
-		if (frequency[sample] > max) {
-			max = frequency[sample];
+		frequency[sample - 10000]++;
+		if (frequency[sample - 10000] > max) {
+			max = frequency[sample - 10000];
 			mode = sample;
 		}
 	}
 
-	int minimum = 32678;
-	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
+	int integral = 0;
+	for (int i = adc_write_index; i < ADC_BUFFER_SIZE; i++) {
 		int sample = ADC_Read(i);
-		if (sample < minimum) {
-			minimum = sample;
-		}
+		integral += sample - mode;
 	}
 
-	bool locked = false;
-	int dynamic_range = mode - minimum;
-	int start_index = 0;
-	int end_index = 0;
-	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
-		int sample = ADC_Read(i);
-		if (!locked) {
-			if (abs(mode - sample) < ((dynamic_range >> 5) + 1)) {
-				locked = true;
-			}
-		} else {
-			if (sample < mode - (dynamic_range >> 1)) {
-				start_index = i + 293;
-				end_index = start_index + 585;
-				break;
-			}
-		}
-	}
-
-	for (int i = start_index; i < end_index; i++) {
-		int sample = ADC_Read(i);
-		concentration_buffer[current_well] += mode - sample;
-	}
-
+	concentration_buffer[current_well] = integral;
+	
 	current_well++;
 	start_move_to_well();
 }
@@ -278,6 +279,11 @@ void start_process_waveform(void) {
 void start_report_results(void) {
 	SCH_ClearTasks();
 	current_state = STATE_REPORT_RESULTS;
+	for(int i = 0; i < current_well; i++) {
+		char buffer[64];
+		sprintf(buffer, "Well %d: %d\r\n", i, concentration_buffer[i]);
+		USART_Transmit(buffer, strlen(buffer));
+	}
 	USART_Transmit(concentration_buffer, 4 * current_well);
 	start_await_job();
 }
@@ -285,7 +291,7 @@ void start_report_results(void) {
 int main(void) {
 	TRF_Init();
 
-	ADC_SetSampleRate(292571);
+	ADC_SetSampleRate(12800);
 
 	Stepper_SetSpeed(7500);
 	Stepper_Motor_Init(&stepper_x, &stepper_x_step_pin, &stepper_x_dir_pin);
@@ -311,7 +317,7 @@ int main(void) {
 	job_buffer[job_ind * 2] = 0xF0;
 	job_buffer_index = job_ind * 2 + 1;
 
-	SCH_AddTask(start_capture_waveform, 1000, 0);
+	SCH_AddTask(start_home_axes, 1000, 0);
 
 	while (1) {
 		SCH_DispatchTasks();
