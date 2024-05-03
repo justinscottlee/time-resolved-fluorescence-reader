@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define ADC_BUFFER_SIZE 2048
+#define ADC_BUFFER_SIZE 4096
 
 void ADC_Start(void);
 void ADC_Stop(void);

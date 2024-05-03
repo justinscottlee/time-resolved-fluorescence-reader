@@ -5,5 +5,6 @@
 
 void TRF_Assert(bool condition);
 void TRF_Init(void);
+void LCD_Print(char *msg);
 
 #endif

@@ -10,8 +10,12 @@ TIM_HandleTypeDef htim15;
 uint32_t adc_buffer[ADC_BUFFER_SIZE];
 uint32_t adc_write_index;
 
+bool completed;
+
 // Begin measuring continuously from the ADC into the adc_buffer.
 void ADC_Start(void) {
+    completed = false;
+    adc_write_index = 0;
     TRF_Assert(HAL_TIM_Base_Start(&htim15) == HAL_OK);
 }
 
@@ -79,7 +83,12 @@ void ADC_Init(void) {
     hadc1.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;
     hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
     hadc1.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
-    hadc1.Init.OversamplingMode = DISABLE;
+    hadc1.Init.OversamplingMode = ENABLE;
+    hadc1.Init.Oversampling.Ratio = 256;
+    hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_8;
+    hadc1.Init.Oversampling.TriggeredMode = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;
+    hadc1.Init.Oversampling.OversamplingStopReset = ADC_REGOVERSAMPLING_RESUMED_MODE;
+
     TRF_Assert(HAL_ADC_Init(&hadc1) == HAL_OK);
 
     ADC_MultiModeTypeDef ADC_MultiModeStruct = {0};
@@ -102,6 +111,12 @@ void ADC_Init(void) {
 // ADC conversion complete callback to store the measured value in the buffer.
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
     if (hadc == &hadc1) {
+        if (completed) {
+            return;
+        }
+        if (adc_write_index == ADC_BUFFER_SIZE - 1) {
+            completed = true;
+        }
         adc_buffer[adc_write_index] = HAL_ADC_GetValue(&hadc1);
         adc_write_index = (adc_write_index + 1) % ADC_BUFFER_SIZE;
     }

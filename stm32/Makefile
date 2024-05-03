@@ -34,6 +34,7 @@ src/trf_adc.c \
 src/trf_gpio.c \
 src/trf_usart.c \
 src/trf_stepper.c \
+src/trf_lcd.c \
 hal/src/stm32h7xx_hal_cortex.c \
 hal/src/stm32h7xx_hal_rcc.c \
 hal/src/stm32h7xx_hal_rcc_ex.c \

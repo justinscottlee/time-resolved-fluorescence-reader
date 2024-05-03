@@ -8,6 +8,7 @@
 #include "trf_usart.h"
 #include "trf_adc.h"
 #include "trf_stepper.h"
+#include "trf_lcd.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -23,8 +24,8 @@
 //#define MICROPLATE_WELL_ORIGIN_X -7975
 //#define MICROPLATE_WELL_ORIGIN_Y -23000
 // CALIBRATION CONSTANTS
-#define MICROPLATE_WELL_ORIGIN_X -7975
-#define MICROPLATE_WELL_ORIGIN_Y -23000
+#define MICROPLATE_WELL_ORIGIN_X -8200
+#define MICROPLATE_WELL_ORIGIN_Y -25000
 #define STEPS_PER_WELL_X -1983
 #define STEPS_PER_WELL_Y -8000
 
@@ -161,7 +162,7 @@ void home_y(void) {
 
 // Receive bytes from USART, until a 0xF0 byte is received, signaling the end of the job.
 void receive_job(void) {
-	int bytes_received = USART_Receive(&job_buffer[job_buffer_index], 8);
+	int bytes_received = USART_Receive(&job_buffer[job_buffer_index], 1);
 	job_buffer_index += bytes_received;
 	if (bytes_received > 0) {
 		uint8_t last_received_char = job_buffer[job_buffer_index - 1];
@@ -182,6 +183,7 @@ void wait_to_reach_well(void) {
 // Setup AWAIT_JOB state.
 void start_await_job(void) {
 	SCH_ClearTasks();
+	job_buffer_index = 0;
 	current_state = STATE_AWAIT_JOB;
 	SCH_AddTask(receive_job, 0, 1);
 }
@@ -205,7 +207,7 @@ void start_move_to_well() {
 	SCH_ClearTasks();
 	current_state = STATE_MOVE_TO_WELL;
 	if (job_buffer[current_well * 2] == 0xF0) {
-		start_report_results();
+		start_await_job(); // TODO: change this to report results.
 		return;
 	}
 	stepper_x.target_position = MICROPLATE_WELL_ORIGIN_X + job_buffer[current_well * 2] * STEPS_PER_WELL_X;
@@ -228,7 +230,8 @@ uint16_t frequency[40000];
 void start_process_waveform(void) {
 	SCH_ClearTasks();
 
-/*
+	current_state = STATE_PROCESS_WAVEFORM;
+
 	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
 		int sample = ADC_Read(i);
 		char buffer[64];
@@ -236,11 +239,9 @@ void start_process_waveform(void) {
 		USART_Transmit(buffer, strlen(buffer));
 	}
 
-	while (true) {
+	while (1) {
 
-	}*/
-
-	current_state = STATE_PROCESS_WAVEFORM;
+	}
 
 	extern uint32_t adc_write_index;
 
@@ -278,6 +279,7 @@ void start_process_waveform(void) {
 // Setup REPORT_RESULTS state.
 void start_report_results(void) {
 	SCH_ClearTasks();
+
 	current_state = STATE_REPORT_RESULTS;
 	for(int i = 0; i < current_well; i++) {
 		char buffer[64];
@@ -291,7 +293,7 @@ void start_report_results(void) {
 int main(void) {
 	TRF_Init();
 
-	ADC_SetSampleRate(12800);
+	ADC_SetSampleRate(25600);
 
 	Stepper_SetSpeed(7500);
 	Stepper_Motor_Init(&stepper_x, &stepper_x_step_pin, &stepper_x_dir_pin);
@@ -306,18 +308,13 @@ int main(void) {
 	GPIO_Pin_InitOutput(&led_power_selector_1mA);
 	disable_led();
 
-	int job_ind = 0;
-	for (int x = 0; x < 4; x++) {
-		for (int y = 0; y < 6; y++) {
-			job_buffer[job_ind * 2] = x;
-			job_buffer[job_ind * 2 + 1] = y;
-			job_ind++;
-		}
-	}
-	job_buffer[job_ind * 2] = 0xF0;
-	job_buffer_index = job_ind * 2 + 1;
+	job_buffer[0] = 0x00;
+	job_buffer[1] = 0x00;
+	job_buffer[2] = 0xF0;
+	job_buffer_index = 3;
 
-	SCH_AddTask(start_home_axes, 1000, 0);
+	//led_power_level = 3;
+	SCH_AddTask(start_home_axes, 5000, 0);
 
 	while (1) {
 		SCH_DispatchTasks();
