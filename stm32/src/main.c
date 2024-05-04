@@ -14,20 +14,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// CALIBRATION CONSTANTS 24-well
-//#define MICROPLATE_WELL_ORIGIN_X -8600
-//#define MICROPLATE_WELL_ORIGIN_Y -22500
-//#define STEPS_PER_WELL_X -1967
-//#define STEPS_PER_WELL_Y -7750
+#define MICROPLATE_WELL_ORIGIN_X_24 -8200
+#define MICROPLATE_WELL_ORIGIN_Y_24 -25000
+#define STEPS_PER_WELL_X_24 -1983
+#define STEPS_PER_WELL_Y_24 -8000
 
+#define MICROPLATE_WELL_ORIGIN_X_96 -8200
+#define MICROPLATE_WELL_ORIGIN_Y_96 -25000
+#define STEPS_PER_WELL_X_96 -1983
+#define STEPS_PER_WELL_Y_96 -8000
 
-//#define MICROPLATE_WELL_ORIGIN_X -7975
-//#define MICROPLATE_WELL_ORIGIN_Y -23000
-// CALIBRATION CONSTANTS
-#define MICROPLATE_WELL_ORIGIN_X -8200
-#define MICROPLATE_WELL_ORIGIN_Y -25000
-#define STEPS_PER_WELL_X -1983
-#define STEPS_PER_WELL_Y -8000
+#define MICROPLATE_WELL_ORIGIN_X_384 -8200
+#define MICROPLATE_WELL_ORIGIN_Y_384 -25000
+#define STEPS_PER_WELL_X_384 -1983
+#define STEPS_PER_WELL_Y_384 -8000
+
+#define DEBUG true
+
+int microplate_well_origin_x, microplate_well_origin_y;
+int steps_per_well_x, steps_per_well_y;
 
 typedef enum {
 	STATE_AWAIT_JOB,
@@ -167,6 +172,26 @@ void receive_job(void) {
 	if (bytes_received > 0) {
 		uint8_t last_received_char = job_buffer[job_buffer_index - 1];
 		if (last_received_char == 0xF0) {
+			switch(job_buffer[0]) {
+				case 0x00:
+					microplate_well_origin_x = MICROPLATE_WELL_ORIGIN_X_24;
+					microplate_well_origin_y = MICROPLATE_WELL_ORIGIN_Y_24;
+					steps_per_well_x = STEPS_PER_WELL_X_24;
+					steps_per_well_y = STEPS_PER_WELL_Y_24;
+					break;
+				case 0x01:
+					microplate_well_origin_x = MICROPLATE_WELL_ORIGIN_X_96;
+					microplate_well_origin_y = MICROPLATE_WELL_ORIGIN_Y_96;
+					steps_per_well_x = STEPS_PER_WELL_X_96;
+					steps_per_well_y = STEPS_PER_WELL_Y_96;
+					break;
+				case 0x02:
+					microplate_well_origin_x = MICROPLATE_WELL_ORIGIN_X_384;
+					microplate_well_origin_y = MICROPLATE_WELL_ORIGIN_Y_384;
+					steps_per_well_x = STEPS_PER_WELL_X_384;
+					steps_per_well_y = STEPS_PER_WELL_Y_384;
+					break;
+			}
 			start_home_axes();
 			return;
 		}
@@ -206,12 +231,12 @@ void start_measure_wells(void) {
 void start_move_to_well() {
 	SCH_ClearTasks();
 	current_state = STATE_MOVE_TO_WELL;
-	if (job_buffer[current_well * 2] == 0xF0) {
+	if (job_buffer[current_well * 2 + 1] == 0xF0) {
 		start_await_job(); // TODO: change this to report results.
 		return;
 	}
-	stepper_x.target_position = MICROPLATE_WELL_ORIGIN_X + job_buffer[current_well * 2] * STEPS_PER_WELL_X;
-	stepper_y.target_position = MICROPLATE_WELL_ORIGIN_Y + job_buffer[current_well * 2 + 1] * STEPS_PER_WELL_Y;
+	stepper_x.target_position = microplate_well_origin_x + job_buffer[current_well * 2 + 1] * steps_per_well_x;
+	stepper_y.target_position = microplate_well_origin_y + job_buffer[current_well * 2 + 2] * steps_per_well_y;
 	SCH_AddTask(wait_to_reach_well, 0, 1);
 }
 
@@ -224,7 +249,7 @@ void start_capture_waveform() {
 	SCH_AddTask(check_waveform_clipped, 200, 0);
 }
 
-uint16_t frequency[40000];
+uint16_t frequency[20000];
 
 // Setup PROCESS_WAVEFORM state.
 void start_process_waveform(void) {
@@ -232,20 +257,22 @@ void start_process_waveform(void) {
 
 	current_state = STATE_PROCESS_WAVEFORM;
 
-	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
-		int sample = ADC_Read(i);
-		char buffer[64];
-		sprintf(buffer, "%d\r\n", sample);
-		USART_Transmit(buffer, strlen(buffer));
-	}
+	if (DEBUG) {
+		for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
+			int sample = ADC_Read(i);
+			char buffer[64];
+			sprintf(buffer, "%d\r\n", sample);
+			USART_Transmit(buffer, strlen(buffer));
+		}
 
-	while (1) {
+		while (1) {
 
+		}
 	}
 
 	extern uint32_t adc_write_index;
 
-	for (int i = 0; i < 40000; i++) {
+	for (int i = 0; i < 20000; i++) {
 		frequency[i] = 0;
 	}
 
@@ -254,20 +281,50 @@ void start_process_waveform(void) {
 
 	for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
 		int sample = ADC_Read(i);
-		if (sample >= 50000 || sample < 10000) {
+		if (sample >= 65000 || sample < 45000) {
 			continue;
 		}
-		frequency[sample - 10000]++;
-		if (frequency[sample - 10000] > max) {
-			max = frequency[sample - 10000];
+		frequency[sample - 45000]++;
+		if (frequency[sample - 45000] > max) {
+			max = frequency[sample - 45000];
 			mode = sample;
 		}
 	}
 
-	int integral = 0;
+	int maximum_sample = 0;
+	int minimum_sample = 65535;
 	for (int i = adc_write_index; i < ADC_BUFFER_SIZE; i++) {
 		int sample = ADC_Read(i);
-		integral += sample - mode;
+		if (sample > maximum_sample) {
+			maximum_sample = sample;
+		}
+		if (sample < minimum_sample) {
+			minimum_sample = sample;
+		}
+	}
+
+	int dynamic_range = maximum_sample - minimum_sample;
+
+	int start_index = 0;
+	for (int i = adc_write_index; i < ADC_BUFFER_SIZE; i++) {
+		int sample = ADC_Read(i);
+		if ((mode - sample) < (dynamic_range >> 5)) {
+			start_index = i;
+			break;
+		}
+	}
+	
+	bool locked = false;
+	int integral = 0;
+	for (int i = start_index; i < ADC_BUFFER_SIZE; i++) {
+		int sample = ADC_Read(i);
+		integral += mode - sample;
+		if (sample < (mode - (dynamic_range >> 1))) {
+			locked = true;
+		}
+		if (locked && (mode - sample) < (dynamic_range >> 5)) {
+			break;
+		}
 	}
 
 	concentration_buffer[current_well] = integral;
@@ -310,8 +367,9 @@ int main(void) {
 
 	job_buffer[0] = 0x00;
 	job_buffer[1] = 0x00;
-	job_buffer[2] = 0xF0;
-	job_buffer_index = 3;
+	job_buffer[2] = 0x00;
+	job_buffer[3] = 0xF0;
+	job_buffer_index = 4;
 
 	//led_power_level = 3;
 	SCH_AddTask(start_home_axes, 5000, 0);
